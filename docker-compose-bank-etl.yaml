@@ -1,0 +1,156 @@
+dversion: '3.8'
+
+services:
+  # ============================================================================
+  # PostgreSQL Database for Bank Customer Risk Triggers
+  # ============================================================================
+  postgres-bank:
+    image: postgres:15-alpine
+    container_name: postgres-bank-cust-risk-triggers
+    environment:
+      POSTGRES_DB: bank_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_INITDB_ARGS: "-c shared_preload_libraries=pg_stat_statements"
+    ports:
+      - "5432:5432"
+    volumes:
+      # Mount schema initialization script
+      - ./batch_apps/spark_batch/postgres_schema.sql:/docker-entrypoint-initdb.d/01-init-schema.sql
+      # Mount data directory for persistence
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - bank-etl-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bank_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================================
+  # pgAdmin for Database Management
+  # ============================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin-bank
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    networks:
+      - bank-etl-network
+    depends_on:
+      - postgres-bank
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================================
+  # Spark Master
+  # ============================================================================
+  spark-master:
+    image: bitnami/spark:3.5.1
+    container_name: spark-master
+    environment:
+      SPARK_MODE: master
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+      SPARK_SSL_ENABLED: "no"
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    networks:
+      - bank-etl-network
+    volumes:
+      - ./batch_apps/spark_batch:/opt/spark-apps
+      - ./pipelines/configs:/opt/spark-configs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================================
+  # Spark Worker
+  # ============================================================================
+  spark-worker-1:
+    image: bitnami/spark:3.5.1
+    container_name: spark-worker-1
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 2G
+      SPARK_WORKER_CORES: 2
+    depends_on:
+      - spark-master
+    networks:
+      - bank-etl-network
+    volumes:
+      - ./batch_apps/spark_batch:/opt/spark-apps
+      - ./pipelines/configs:/opt/spark-configs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================================
+  # Kafka (optional, for streaming scenarios)
+  # ============================================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper-bank
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_INIT_LIMIT: 5
+    ports:
+      - "2181:2181"
+    networks:
+      - bank-etl-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka-bank
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-bank:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-bank:29092,PLAINTEXT_HOST://kafka-bank:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    networks:
+      - bank-etl-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  bank-etl-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+

@@ -46,7 +46,23 @@ Run streaming pipeline (dry-run):
 python etl-project/spark-job/local_batch_streaming_runner.py --config etl-project/appconfig/dev/pipeline_streaming_local_pg_cassandra.json --dry-run
 ```
 
-Airflow DAGs:
+## Source Files Used
 
-- `airflow/dags/batch/local_batch_pg_cassandra_dag.py`
-- `airflow/dags/streaming/local_streaming_pg_cassandra_dag.py`
+The pipelines now read your provided local files:
+
+- `etl-project/local_source/bank/bank_data.csv`
+- `etl-project/local_source/bank/bank_data.json`
+- `etl-project/local_source/bank/bank_data.txt`
+- `etl-project/local_source/trips/trip_data.csv`
+
+## New Pipeline Names
+
+- `bank_cards_daily_batch_pg_cassandra`  (from `bank_data.csv`)
+- `bank_cards_pipe_batch_pg_cassandra`   (from `bank_data.txt`)
+- `bank_cards_live_stream_pg_cassandra`  (from `bank_data.json`)
+- `city_trips_batch_pg_cassandra`        (from `trip_data.csv`)
+
+## Airflow DAGs
+
+- `airflow/dags/batch/bank_cards_and_trips_batch_dag.py`
+- `airflow/dags/streaming/bank_cards_streaming_dag.py`

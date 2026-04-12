@@ -7,7 +7,7 @@ BASE_DIR = etl-project
 RUNNER = $(BASE_DIR)/spark-job/pyspark.py
 PYTHON = python
 
-.PHONY: help validate dry-run run local-batch local-streaming lint test airflow-up airflow-down clean
+.PHONY: help validate dry-run run local-batch local-streaming bank-cards-batch bank-cards-pipe-batch bank-cards-stream city-trips-batch lint test airflow-up airflow-down clean
 
 help:
 	@echo "ETL Learning Makefile"
@@ -22,6 +22,10 @@ help:
 	@echo "  make clean            Remove __pycache__ and temp files"
 	@echo "  make local-batch      Run local CSV -> PostgreSQL + Cassandra (dry-run)"
 	@echo "  make local-streaming  Run local JSONL stream -> PostgreSQL + Cassandra (dry-run)"
+	@echo "  make bank-cards-batch Run bank_data.csv -> PostgreSQL + Cassandra (dry-run)"
+	@echo "  make bank-cards-pipe-batch Run bank_data.txt (pipe) -> PostgreSQL + Cassandra (dry-run)"
+	@echo "  make bank-cards-stream Run bank_data.json stream -> PostgreSQL + Cassandra (dry-run)"
+	@echo "  make city-trips-batch Run trip_data.csv -> PostgreSQL + Cassandra (dry-run)"
 
 validate:
 	$(PYTHON) -c "\
@@ -59,3 +63,15 @@ local-batch:
 
 local-streaming:
 	$(PYTHON) $(BASE_DIR)/spark-job/local_batch_streaming_runner.py --config $(BASE_DIR)/appconfig/dev/pipeline_streaming_local_pg_cassandra.json --dry-run
+
+bank-cards-batch:
+	$(PYTHON) $(BASE_DIR)/spark-job/local_batch_streaming_runner.py --config $(BASE_DIR)/appconfig/dev/pipeline_bank_cards_batch_csv_pg_cassandra.json --dry-run
+
+bank-cards-pipe-batch:
+	$(PYTHON) $(BASE_DIR)/spark-job/local_batch_streaming_runner.py --config $(BASE_DIR)/appconfig/dev/pipeline_bank_cards_pipe_batch_pg_cassandra.json --dry-run
+
+bank-cards-stream:
+	$(PYTHON) $(BASE_DIR)/spark-job/local_batch_streaming_runner.py --config $(BASE_DIR)/appconfig/dev/pipeline_bank_cards_streaming_json_pg_cassandra.json --dry-run
+
+city-trips-batch:
+	$(PYTHON) $(BASE_DIR)/spark-job/local_batch_streaming_runner.py --config $(BASE_DIR)/appconfig/dev/pipeline_city_trips_batch_pg_cassandra.json --dry-run

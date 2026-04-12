@@ -37,6 +37,37 @@ def _apply_transforms(records: list[dict[str, Any]], transforms: list[dict[str, 
     return out
 
 
+def _read_csv_file(path: Path, delimiter: str = ",") -> list[dict[str, Any]]:
+    with path.open("r", encoding="utf-8-sig", newline="") as f:
+        return list(csv.DictReader(f, delimiter=delimiter))
+
+
+def _read_jsonl_file(path: Path) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    with path.open("r", encoding="utf-8-sig") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                records.append(json.loads(line))
+    return records
+
+
+def _read_source_records(source_cfg: dict[str, Any]) -> list[dict[str, Any]]:
+    source_type = str(source_cfg.get("type", "local_csv")).lower()
+    source_path = Path(source_cfg["path"])
+
+    if source_type == "local_csv":
+        return _read_csv_file(source_path, delimiter=",")
+    if source_type == "local_delimited_file":
+        return _read_csv_file(source_path, delimiter=source_cfg.get("delimiter", "|"))
+    if source_type == "local_jsonl_file":
+        return _read_jsonl_file(source_path)
+    if source_type == "local_jsonl_dir":
+        return _read_jsonl_dir_once(source_path)
+
+    raise ValueError(f"Unsupported source type: {source_type}")
+
+
 def _write_postgres(records: list[dict[str, Any]], conn: dict[str, Any], table: str, dry_run: bool) -> None:
     if dry_run:
         logging.info("DRY-RUN postgres target table=%s rows=%d", table, len(records))
@@ -90,9 +121,7 @@ def _write_cassandra(records: list[dict[str, Any]], conn: dict[str, Any], keyspa
 
 
 def run_batch(config: dict[str, Any], dry_run: bool) -> int:
-    src = Path(config["source"]["path"])
-    with src.open("r", encoding="utf-8-sig", newline="") as f:
-        rows = list(csv.DictReader(f))
+    rows = _read_source_records(config["source"])
 
     rows = _apply_transforms(rows, config.get("transforms", []))
     connections = config.get("connections", {})
@@ -126,14 +155,20 @@ def _read_jsonl_dir_once(source_dir: Path) -> list[dict[str, Any]]:
 
 
 def run_streaming(config: dict[str, Any], dry_run: bool) -> int:
-    source_dir = Path(config["source"]["path"])
+    source_cfg = config["source"]
     poll = int(config.get("streaming", {}).get("poll_interval_sec", 2))
     max_batches = int(config.get("streaming", {}).get("max_batches", 2))
+    batch_size = int(config.get("streaming", {}).get("batch_size", 25))
 
     connections = config.get("connections", {})
+    all_records = _read_source_records(source_cfg)
 
     for batch_no in range(1, max_batches + 1):
-        rows = _read_jsonl_dir_once(source_dir)
+        start = (batch_no - 1) * batch_size
+        end = start + batch_size
+        rows = all_records[start:end] if all_records else []
+        if not rows:
+            rows = all_records
         rows = _apply_transforms(rows, config.get("transforms", []))
 
         for t in config.get("targets", []):

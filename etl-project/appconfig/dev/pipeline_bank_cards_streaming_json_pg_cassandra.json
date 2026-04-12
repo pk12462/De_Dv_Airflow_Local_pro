@@ -1,0 +1,35 @@
+{
+  "pipelineName": "bank_cards_live_stream_pg_cassandra",
+  "mode": "streaming",
+  "source": {
+    "type": "local_jsonl_file",
+    "path": "etl-project/local_source/bank/bank_data.json"
+  },
+  "streaming": {
+    "poll_interval_sec": 1,
+    "max_batches": 4,
+    "batch_size": 25
+  },
+  "transforms": [
+    {"type": "filter_not_null", "column": "account_id"},
+    {"type": "add_current_timestamp", "column": "processed_at"}
+  ],
+  "targets": [
+    {"type": "postgres", "table": "bank_cards_stream"},
+    {"type": "cassandra", "keyspace": "learning", "table": "bank_cards_stream"}
+  ],
+  "connections": {
+    "postgres": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "learning_db",
+      "user": "postgres",
+      "password": "postgres"
+    },
+    "cassandra": {
+      "hosts": ["127.0.0.1"],
+      "port": 9042,
+      "keyspace": "learning"
+    }
+  }
+}

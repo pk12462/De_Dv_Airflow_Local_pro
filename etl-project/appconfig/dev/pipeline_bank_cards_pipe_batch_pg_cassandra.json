@@ -1,0 +1,31 @@
+{
+  "pipelineName": "bank_cards_pipe_batch_pg_cassandra",
+  "mode": "batch",
+  "source": {
+    "type": "local_delimited_file",
+    "path": "etl-project/local_source/bank/bank_data.txt",
+    "delimiter": "|"
+  },
+  "transforms": [
+    {"type": "filter_not_null", "column": "account_id"},
+    {"type": "add_current_timestamp", "column": "processed_at"}
+  ],
+  "targets": [
+    {"type": "postgres", "table": "bank_cards_pipe_batch"},
+    {"type": "cassandra", "keyspace": "learning", "table": "bank_cards_pipe_batch"}
+  ],
+  "connections": {
+    "postgres": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "learning_db",
+      "user": "postgres",
+      "password": "postgres"
+    },
+    "cassandra": {
+      "hosts": ["127.0.0.1"],
+      "port": 9042,
+      "keyspace": "learning"
+    }
+  }
+}
