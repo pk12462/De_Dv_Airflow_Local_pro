@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Makefile — UDAIP ETL Project (cust-risk-triggers)
+# Makefile — ETL Learning Project
 # Usage: make <target> [ENV=dev|it|uat|prod]
 # ─────────────────────────────────────────────────────────────────────────────
 ENV ?= dev
@@ -7,10 +7,10 @@ BASE_DIR = etl-project
 RUNNER = $(BASE_DIR)/spark-job/pyspark.py
 PYTHON = python
 
-.PHONY: help validate dry-run run lint test airflow-up airflow-down clean
+.PHONY: help validate dry-run run local-batch local-streaming lint test airflow-up airflow-down clean
 
 help:
-	@echo "UDAIP ETL Makefile"
+	@echo "ETL Learning Makefile"
 	@echo ""
 	@echo "  make validate         Validate all JSON configs for ENV=$(ENV)"
 	@echo "  make dry-run          Dry-run pipeline for ENV=$(ENV)"
@@ -20,6 +20,8 @@ help:
 	@echo "  make airflow-up       Start Airflow via docker-compose"
 	@echo "  make airflow-down     Stop Airflow"
 	@echo "  make clean            Remove __pycache__ and temp files"
+	@echo "  make local-batch      Run local CSV -> PostgreSQL + Cassandra (dry-run)"
+	@echo "  make local-streaming  Run local JSONL stream -> PostgreSQL + Cassandra (dry-run)"
 
 validate:
 	$(PYTHON) -c "\
@@ -52,3 +54,8 @@ clean:
 	find . -name "*.pyc" -delete 2>/dev/null; true
 	rm -rf _pdf_pages 2>/dev/null; true
 
+local-batch:
+	$(PYTHON) $(BASE_DIR)/spark-job/local_batch_streaming_runner.py --config $(BASE_DIR)/appconfig/dev/pipeline_batch_local_pg_cassandra.json --dry-run
+
+local-streaming:
+	$(PYTHON) $(BASE_DIR)/spark-job/local_batch_streaming_runner.py --config $(BASE_DIR)/appconfig/dev/pipeline_streaming_local_pg_cassandra.json --dry-run

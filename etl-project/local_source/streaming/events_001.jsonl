@@ -1,0 +1,3 @@
+{"user_id":"U2001","event_type":"purchase","amount":99.99,"event_date":"2026-04-12","status":"COMPLETED"}
+{"user_id":"U2002","event_type":"click","amount":0.0,"event_date":"2026-04-12","status":"COMPLETED"}
+

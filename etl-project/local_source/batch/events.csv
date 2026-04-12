@@ -1,0 +1,5 @@
+user_id,event_type,amount,event_date,status
+U1001,purchase,120.50,2026-04-12,COMPLETED
+U1002,refund,35.00,2026-04-12,COMPLETED
+U1003,login,0.00,2026-04-12,INCOMPLETE
+

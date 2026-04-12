@@ -1,0 +1,35 @@
+{
+  "pipelineName": "local-streaming-to-postgres-cassandra",
+  "mode": "streaming",
+  "source": {
+    "type": "local_jsonl_dir",
+    "path": "etl-project/local_source/streaming"
+  },
+  "streaming": {
+    "poll_interval_sec": 2,
+    "max_batches": 2
+  },
+  "transforms": [
+    {"type": "filter_not_null", "column": "user_id"},
+    {"type": "add_current_timestamp", "column": "processed_at"}
+  ],
+  "targets": [
+    {"type": "postgres", "table": "events_learning_stream"},
+    {"type": "cassandra", "keyspace": "learning", "table": "events_learning_stream"}
+  ],
+  "connections": {
+    "postgres": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "learning_db",
+      "user": "postgres",
+      "password": "postgres"
+    },
+    "cassandra": {
+      "hosts": ["127.0.0.1"],
+      "port": 9042,
+      "keyspace": "learning"
+    }
+  }
+}
+

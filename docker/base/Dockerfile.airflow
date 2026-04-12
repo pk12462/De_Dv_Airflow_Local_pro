@@ -18,6 +18,6 @@ COPY airflow/plugins /opt/airflow/plugins
 COPY pipelines /opt/airflow/pipelines
 COPY batch_apps /opt/airflow/batch_apps
 COPY streaming_apps /opt/airflow/streaming_apps
+COPY etl-project /opt/airflow/etl-project
 
 ENV AIRFLOW__CORE__LOAD_EXAMPLES=False
-

@@ -1,0 +1,31 @@
+{
+  "pipelineName": "local-batch-to-postgres-cassandra",
+  "mode": "batch",
+  "source": {
+    "type": "local_csv",
+    "path": "etl-project/local_source/batch/events.csv"
+  },
+  "transforms": [
+    {"type": "filter_not_null", "column": "user_id"},
+    {"type": "add_current_timestamp", "column": "processed_at"}
+  ],
+  "targets": [
+    {"type": "postgres", "table": "events_learning"},
+    {"type": "cassandra", "keyspace": "learning", "table": "events_learning"}
+  ],
+  "connections": {
+    "postgres": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "learning_db",
+      "user": "postgres",
+      "password": "postgres"
+    },
+    "cassandra": {
+      "hosts": ["127.0.0.1"],
+      "port": 9042,
+      "keyspace": "learning"
+    }
+  }
+}
+
