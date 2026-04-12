@@ -1,0 +1,2 @@
+"""Kafka schemas sub-package."""
+

@@ -1,0 +1,86 @@
+# =============================================================================
+# Batch Pipeline Configuration
+# =============================================================================
+
+pipeline:
+  name: daily-batch-etl-pipeline
+  version: "1.0.0"
+  description: "Daily batch ETL: Extract from source → Transform → Load to target"
+  owner: de-dv-team
+  schedule: "@daily"
+  tags: [batch, etl, spark, pandas, sql]
+
+# ── Spark Batch ───────────────────────────────────────────────────────────────
+spark:
+  master: "${SPARK_MASTER_URL}"
+  app_name: de-dv-spark-batch
+  shuffle_partitions: "200"
+  executor_memory: "${SPARK_EXECUTOR_MEMORY}"
+  driver_memory: "${SPARK_DRIVER_MEMORY}"
+  executor_cores: "${SPARK_EXECUTOR_CORES}"
+  log_level: WARN
+
+source:
+  format: parquet
+  path: "s3://${AWS_S3_BUCKET}/${AWS_S3_PREFIX}/raw/"
+  partition_col: date
+  lookback_days: 1
+  ts_columns: [event_timestamp, created_at]
+  dedup_keys: [event_id]
+  num_partitions: 4
+
+sink:
+  format: delta
+  path: "s3://${AWS_S3_BUCKET}/${AWS_S3_PREFIX}/processed/"
+  write_mode: append
+  partition_by: [date, event_type]
+
+# ── Pandas Batch ──────────────────────────────────────────────────────────────
+pandas:
+  app_name: de-dv-pandas-batch
+  source:
+    format: parquet
+    path: "s3://${AWS_S3_BUCKET}/${AWS_S3_PREFIX}/raw/small/"
+    date_col: date
+    chunk_size: 10000
+  sink:
+    format: parquet
+    path: "/tmp/pandas_output/processed.parquet"
+  transform:
+    dedup_cols: [event_id]
+    drop_cols: [_corrupt_record]
+    fillna:
+      event_type: unknown
+      source_system: unknown
+
+# ── SQL Batch ─────────────────────────────────────────────────────────────────
+sql:
+  app_name: de-dv-sql-batch
+  database:
+    url: "${DATABASE_URL}"
+    pool_size: 5
+  scripts:
+    extract: batch_apps/sql_batch/queries/extract_raw.sql
+    transform: batch_apps/sql_batch/queries/transform_stage.sql
+    load: batch_apps/sql_batch/queries/load_target.sql
+  params:
+    schema: public
+    target_table: processed_events
+
+# ── Concurrency & Retry ───────────────────────────────────────────────────────
+concurrency:
+  max_parallel_tasks: 4
+  lookback_days: 7
+
+retry:
+  max_attempts: 3
+  retry_delay_minutes: 5
+  exponential_backoff: true
+
+# ── Alerting ──────────────────────────────────────────────────────────────────
+alerts:
+  on_failure:
+    email: ["de-team@example.com"]
+    slack_channel: "#de-alerts"
+  sla_minutes: 120
+

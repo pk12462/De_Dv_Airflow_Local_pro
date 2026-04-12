@@ -1,0 +1,120 @@
+# =============================================================================
+# Shield Values — Data Masking & PII Protection Configuration
+# =============================================================================
+# Defines sensitive field names, PII classification levels, and masking
+# strategies applied before any data egresses from the pipeline.
+# =============================================================================
+
+version: "1.0"
+last_updated: "2026-04-12"
+owner: de-dv-team
+
+# ── PII Classification Levels ─────────────────────────────────────────────────
+# Level 1 — High: must always be masked before egress
+# Level 2 — Medium: masked in non-production environments
+# Level 3 — Low: logged only (no masking required)
+
+# ── Field Definitions ─────────────────────────────────────────────────────────
+fields:
+
+  # Level 1 — High Sensitivity
+  - name: email
+    classification: level_1
+    strategy: hash                   # hash | redact | tokenize | encrypt | truncate
+    hash_algorithm: sha256
+    preserve_domain: false           # if true: user@example.com → <hash>@example.com
+
+  - name: phone
+    classification: level_1
+    strategy: redact
+    redact_with: "***-***-****"
+
+  - name: ssn
+    classification: level_1
+    strategy: redact
+    redact_with: "***-**-****"
+
+  - name: credit_card
+    classification: level_1
+    strategy: tokenize
+    token_prefix: "CC_"
+    preserve_last_n: 4               # keep last 4 digits: CC_XXXXXXXXXXXX1234
+
+  - name: password
+    classification: level_1
+    strategy: redact
+    redact_with: "[REDACTED]"
+
+  - name: api_key
+    classification: level_1
+    strategy: redact
+    redact_with: "[REDACTED]"
+
+  - name: secret_key
+    classification: level_1
+    strategy: redact
+    redact_with: "[REDACTED]"
+
+  # Level 2 — Medium Sensitivity
+  - name: first_name
+    classification: level_2
+    strategy: truncate
+    keep_chars: 1                    # "John" → "J***"
+    pad_char: "*"
+
+  - name: last_name
+    classification: level_2
+    strategy: truncate
+    keep_chars: 1
+
+  - name: date_of_birth
+    classification: level_2
+    strategy: generalize             # 1990-05-15 → 1990 (year only)
+    granularity: year
+
+  - name: ip_address
+    classification: level_2
+    strategy: truncate
+    keep_octets: 3                   # 192.168.1.100 → 192.168.1.xxx
+
+  - name: address
+    classification: level_2
+    strategy: redact
+    redact_with: "[ADDRESS REDACTED]"
+
+  - name: zip_code
+    classification: level_2
+    strategy: truncate
+    keep_chars: 3                    # 10001 → 100**
+
+  # Level 3 — Low Sensitivity (log only)
+  - name: user_agent
+    classification: level_3
+    strategy: log_only
+
+  - name: session_id
+    classification: level_3
+    strategy: hash
+    hash_algorithm: md5
+
+  - name: device_id
+    classification: level_3
+    strategy: hash
+    hash_algorithm: md5
+
+# ── Enforcement Policies ───────────────────────────────────────────────────────
+enforcement:
+  apply_in_environments:
+    - production
+    - staging
+  skip_in_environments:
+    - development                    # Masking disabled in dev for debugging
+  on_unrecognized_pii: log_warning   # log_warning | block | ignore
+  strict_mode: false                 # true = fail the pipeline if masking fails
+
+# ── Audit ─────────────────────────────────────────────────────────────────────
+audit:
+  log_pii_access: true
+  log_masking_operations: true
+  audit_table: public.pii_access_log
+

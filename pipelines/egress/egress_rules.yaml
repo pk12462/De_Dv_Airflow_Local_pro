@@ -1,0 +1,123 @@
+# =============================================================================
+# Egress Rules
+# =============================================================================
+# Defines allowed outbound destinations, protocols, ports, and rate limits
+# for all pipeline data flows. The EgressHandler enforces these rules at runtime.
+# =============================================================================
+
+version: "1.0"
+last_updated: "2026-04-12"
+owner: de-dv-team
+
+# ── Default Policy ─────────────────────────────────────────────────────────────
+default_policy: deny          # deny | allow — what to do for destinations not listed below
+
+# ── Allowed Egress Rules ───────────────────────────────────────────────────────
+rules:
+
+  # Kafka cluster
+  - name: kafka-broker
+    destination:
+      hosts:
+        - "${KAFKA_BOOTSTRAP_SERVERS}"
+        - "kafka"
+        - "localhost"
+      ports: [9092, 9093, 9094]
+    protocol: TCP
+    tls_required: false       # Set true in production with SASL_SSL
+    allowed_pipelines:
+      - kafka-spark-streaming-pipeline
+      - daily-batch-etl-pipeline
+    rate_limit:
+      enabled: false
+
+  # Schema Registry
+  - name: schema-registry
+    destination:
+      hosts:
+        - "${KAFKA_SCHEMA_REGISTRY_URL}"
+        - "schema-registry"
+        - "localhost"
+      ports: [8081]
+    protocol: HTTP
+    tls_required: false
+    allowed_pipelines: ["*"]
+    rate_limit:
+      enabled: false
+
+  # PostgreSQL database
+  - name: postgres-db
+    destination:
+      hosts:
+        - "${POSTGRES_HOST}"
+        - "postgres"
+        - "localhost"
+      ports: [5432]
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines:
+      - daily-batch-etl-pipeline
+    rate_limit:
+      enabled: true
+      max_connections: 10
+      connection_timeout_seconds: 30
+
+  # Amazon S3
+  - name: aws-s3
+    destination:
+      hosts:
+        - "s3.amazonaws.com"
+        - "s3.${AWS_DEFAULT_REGION}.amazonaws.com"
+        - "*.s3.amazonaws.com"
+      ports: [443]
+    protocol: HTTPS
+    tls_required: true
+    allowed_pipelines: ["*"]
+    rate_limit:
+      enabled: true
+      max_requests_per_minute: 3000
+      max_bandwidth_mbps: 100
+
+  # Redis cache / Celery broker
+  - name: redis
+    destination:
+      hosts:
+        - "${REDIS_HOST}"
+        - "redis"
+        - "localhost"
+      ports: [6379]
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["*"]
+    rate_limit:
+      enabled: false
+
+  # Airflow API (internal)
+  - name: airflow-api
+    destination:
+      hosts:
+        - "airflow-webserver"
+        - "localhost"
+      ports: [8080]
+    protocol: HTTP
+    tls_required: false
+    allowed_pipelines: ["*"]
+    rate_limit:
+      enabled: true
+      max_requests_per_minute: 60
+
+# ── Blocked Destinations (explicit deny list) ─────────────────────────────────
+blocked:
+  - name: public-internet-except-s3
+    description: "Block all public internet except approved AWS endpoints"
+    hosts: ["0.0.0.0/0"]
+    exceptions:
+      - "s3.amazonaws.com"
+      - "*.s3.amazonaws.com"
+
+# ── Violation Handling ────────────────────────────────────────────────────────
+violation_handling:
+  action: log_and_block       # log_only | log_and_block | alert_and_block
+  alert_channel: "#de-security-alerts"
+  log_level: ERROR
+

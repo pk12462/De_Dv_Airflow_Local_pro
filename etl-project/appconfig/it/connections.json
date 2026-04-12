@@ -1,0 +1,16 @@
+{
+  "database": {
+    "url": "postgresql://it-db-host:5432/it_db",
+    "user": "${DB_USER}",
+    "password": "${DB_PASSWORD}"
+  },
+  "api": {
+    "url": "http://it-api-host:8000/api/events",
+    "authType": "BEARER",
+    "timeout": 30
+  },
+  "storage": {
+    "outputPath": "./output/it",
+    "format": "parquet"
+  }
+}

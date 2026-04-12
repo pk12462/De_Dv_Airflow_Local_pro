@@ -1,0 +1,62 @@
+{{- if .Values.cronJob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "cust-risk-triggers.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "cust-risk-triggers.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronJob.schedule | quote }}
+  concurrencyPolicy: {{ .Values.cronJob.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.cronJob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronJob.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "cust-risk-triggers.labels" . | nindent 12 }}
+        spec:
+          serviceAccountName: {{ .Values.serviceAccount.name }}
+          restartPolicy: OnFailure
+          containers:
+            - name: cust-risk-triggers
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command:
+                - python
+                - /app/etl-project/spark-job/pyspark.py
+                - --env
+                - {{ .Values.env }}
+                - --base-dir
+                - /app/etl-project
+              env:
+                - name: SPARK_MASTER_URL
+                  value: {{ .Values.sparkConfig.masterUrl | quote }}
+                - name: SPARK_EXECUTOR_MEMORY
+                  value: {{ .Values.sparkConfig.executorMemory | quote }}
+                - name: SPARK_DRIVER_MEMORY
+                  value: {{ .Values.sparkConfig.driverMemory | quote }}
+                - name: VAULT_SYNAPSE_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: cust-risk-secrets-{{ .Values.env }}
+                      key: VAULT_SYNAPSE_USER
+                - name: VAULT_SYNAPSE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: cust-risk-secrets-{{ .Values.env }}
+                      key: VAULT_SYNAPSE_PASSWORD
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+              volumeMounts:
+                - name: app-config
+                  mountPath: /app/etl-project/appconfig
+                  readOnly: true
+          volumes:
+            - name: app-config
+              configMap:
+                name: cust-risk-pipeline-{{ .Values.env }}
+{{- end }}
+

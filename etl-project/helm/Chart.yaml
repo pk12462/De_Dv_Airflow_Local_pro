@@ -1,0 +1,10 @@
+apiVersion: v2
+name: cust-risk-triggers
+description: Helm chart for UDAIP config-driven batch ETL — cust-risk-triggers pipeline
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords: [spark, etl, batch, udaip, cust-risk]
+maintainers:
+  - name: de-dv-team
+

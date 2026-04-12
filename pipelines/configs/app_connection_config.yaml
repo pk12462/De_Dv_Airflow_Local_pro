@@ -1,0 +1,99 @@
+# =============================================================================
+# Application Connection Config
+# =============================================================================
+# Central YAML mapping every app/service to its connection parameters.
+# Secret values are referenced via environment variable placeholders.
+# This file is safe to commit — credentials are NOT stored here.
+# =============================================================================
+
+connections:
+
+  # ── Kafka ─────────────────────────────────────────────────────────────────
+  kafka:
+    type: kafka
+    bootstrap_servers: "${KAFKA_BOOTSTRAP_SERVERS}"        # e.g. broker:9092
+    schema_registry_url: "${KAFKA_SCHEMA_REGISTRY_URL}"   # e.g. http://schema-registry:8081
+    security_protocol: "${KAFKA_SECURITY_PROTOCOL}"        # PLAINTEXT | SASL_SSL
+    sasl_mechanism: "${KAFKA_SASL_MECHANISM}"
+    credentials:
+      username: "${KAFKA_SASL_USERNAME}"
+      password: "${KAFKA_SASL_PASSWORD}"
+    topics:
+      source: "${KAFKA_SOURCE_TOPIC}"
+      sink: "${KAFKA_SINK_TOPIC}"
+      dlq: "${KAFKA_DLQ_TOPIC}"
+    consumer:
+      group_id: "${KAFKA_CONSUMER_GROUP_ID}"
+      auto_offset_reset: earliest
+      enable_auto_commit: false
+      max_poll_records: 500
+    producer:
+      acks: all
+      compression_type: snappy
+      batch_size: 16384
+      linger_ms: 5
+
+  # ── Spark ─────────────────────────────────────────────────────────────────
+  spark:
+    type: spark
+    master: "${SPARK_MASTER_URL}"                          # local[*] | spark://host:7077 | k8s://...
+    app_name: "${SPARK_APP_NAME}"
+    executor_memory: "${SPARK_EXECUTOR_MEMORY}"
+    driver_memory: "${SPARK_DRIVER_MEMORY}"
+    executor_cores: "${SPARK_EXECUTOR_CORES}"
+    log_level: "${SPARK_LOG_LEVEL}"
+    checkpoint_dir: "${SPARK_CHECKPOINT_DIR}"
+    packages:
+      - org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      - io.delta:delta-spark_2.12:3.2.0
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────
+  postgres:
+    type: postgres
+    host: "${POSTGRES_HOST}"
+    port: "${POSTGRES_PORT}"
+    database: "${POSTGRES_DB}"
+    credentials:
+      username: "${POSTGRES_USER}"
+      password: "${POSTGRES_PASSWORD}"
+    pool:
+      pool_size: 5
+      max_overflow: 10
+      pool_timeout: 30
+      pool_pre_ping: true
+    schema: public
+
+  # ── Amazon S3 ─────────────────────────────────────────────────────────────
+  s3:
+    type: s3
+    region: "${AWS_DEFAULT_REGION}"
+    bucket: "${AWS_S3_BUCKET}"
+    prefix: "${AWS_S3_PREFIX}"
+    credentials:
+      access_key_id: "${AWS_ACCESS_KEY_ID}"
+      secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+    paths:
+      raw: "s3://${AWS_S3_BUCKET}/${AWS_S3_PREFIX}/raw/"
+      processed: "s3://${AWS_S3_BUCKET}/${AWS_S3_PREFIX}/processed/"
+      archive: "s3://${AWS_S3_BUCKET}/${AWS_S3_PREFIX}/archive/"
+
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  redis:
+    type: redis
+    host: "${REDIS_HOST}"
+    port: "${REDIS_PORT}"
+    password: "${REDIS_PASSWORD}"
+    db: 0
+    socket_timeout: 5
+    connection_pool_size: 10
+
+  # ── Airflow Metadata DB ───────────────────────────────────────────────────
+  airflow_db:
+    type: postgres
+    url: "${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN}"
+
+  # ── Airflow Celery Broker ─────────────────────────────────────────────────
+  celery_broker:
+    type: redis
+    url: "${AIRFLOW__CELERY__BROKER_URL}"
+

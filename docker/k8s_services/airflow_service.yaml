@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-webserver
+  namespace: de-dv
+spec:
+  sessionAffinity: ClientIP
+  selector:
+    component: airflow-webserver
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+

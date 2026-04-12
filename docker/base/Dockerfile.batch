@@ -1,0 +1,26 @@
+FROM python:3.11-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openjdk-17-jre-headless \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+COPY batch_apps /app/batch_apps
+COPY pipelines /app/pipelines
+COPY .env.example /app/.env.example
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV APP_MODULE=batch_apps.spark_batch.spark_batch_app
+
+ENTRYPOINT ["python", "-m"]
+CMD ["batch_apps.spark_batch.spark_batch_app", "--config", "pipelines/configs/batch_pipeline_config.yaml"]
+

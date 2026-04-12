@@ -1,0 +1,45 @@
+replicaCount: 1
+namespace: de-dv
+
+image:
+  repository: de-dv/cust-risk-triggers
+  tag: latest
+  pullPolicy: IfNotPresent
+
+env: dev   # dev | it | uat | prod
+
+sparkConfig:
+  executorMemory: "4g"
+  driverMemory: "2g"
+  numExecutors: 4
+  masterUrl: local[*]
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+  limits:
+    cpu: "2000m"
+    memory: "8Gi"
+
+serviceAccount:
+  create: true
+  name: cust-risk-sa
+
+vault:
+  enabled: true
+  role: cust-risk-triggers
+  secretPath: secret/data/cust-risk-triggers
+
+configMap:
+  appConfigDir: /app/etl-project/appconfig
+  queriesDir: /app/etl-project/queries
+  schemaDir: /app/etl-project/schema
+
+cronJob:
+  enabled: true
+  schedule: "0 2 * * *"   # 02:00 UTC daily
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+

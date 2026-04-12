@@ -1,0 +1,20 @@
+{
+  "database": {
+    "url": "postgresql://uat-db-host:5432/uat_db",
+    "user": "${DB_USER}",
+    "password": "${DB_PASSWORD}"
+  },
+  "api": {
+    "url": "http://uat-api-host:8000/api/events",
+    "authType": "MTLS",
+    "timeout": 30
+  },
+  "storage": {
+    "outputPath": "./output/uat",
+    "format": "parquet"
+  },
+  "reference": {
+    "url": "postgresql://uat-db-host:5432/uat_db",
+    "table": "user_tier_reference"
+  }
+}

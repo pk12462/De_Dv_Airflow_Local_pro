@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "de-dv-platform.fullname" . }}-streaming
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: streaming-app
+  ports:
+    - name: http
+      port: {{ .Values.service.streamingPort }}
+      targetPort: {{ .Values.service.streamingPort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "de-dv-platform.fullname" . }}-batch
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: batch-app
+  ports:
+    - name: http
+      port: {{ .Values.service.batchPort }}
+      targetPort: {{ .Values.service.batchPort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "de-dv-platform.fullname" . }}-airflow
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: airflow
+  ports:
+    - name: http
+      port: {{ .Values.service.airflowPort }}
+      targetPort: {{ .Values.service.airflowPort }}
+

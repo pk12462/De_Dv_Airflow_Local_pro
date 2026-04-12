@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+ENV/
+env/
+.Python
+
+# Secrets & Environment
+.env
+*.secret
+*_actual.yaml
+secrets_actual.yaml
+*.pem
+*.key
+*.crt
+*.p12
+
+# Logs
+logs/
+*.log
+airflow/logs/
+
+# Spark checkpoints & temp
+spark/checkpoints/
+streaming_apps/spark_streaming/checkpoints/*
+!streaming_apps/spark_streaming/checkpoints/.gitkeep
+/tmp/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
+# Helm
+docker/helm/charts/
+*.tgz
+
+# Delta Lake
+_delta_log/
+*.crc
+part-*.parquet
+part-*.json
+part-*.csv
+
+# Airflow
+airflow/logs/*
+!airflow/logs/.gitkeep
+airflow/.env
+

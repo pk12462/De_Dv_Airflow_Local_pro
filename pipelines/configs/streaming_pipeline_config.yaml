@@ -1,0 +1,64 @@
+# =============================================================================
+# Streaming Pipeline Configuration
+# =============================================================================
+
+pipeline:
+  name: kafka-spark-streaming-pipeline
+  version: "1.0.0"
+  description: "Kafka → Spark Structured Streaming → Delta Lake pipeline"
+  owner: de-dv-team
+  tags: [streaming, kafka, spark, delta]
+
+# ── Spark Settings ────────────────────────────────────────────────────────────
+spark:
+  master: "${SPARK_MASTER_URL}"
+  app_name: de-dv-spark-streaming
+  shuffle_partitions: "4"
+  executor_memory: "${SPARK_EXECUTOR_MEMORY}"
+  driver_memory: "${SPARK_DRIVER_MEMORY}"
+  log_level: WARN
+  checkpoint_dir: "${SPARK_CHECKPOINT_DIR}"
+  trigger_interval: "10 seconds"
+
+# ── Kafka Source ──────────────────────────────────────────────────────────────
+kafka:
+  bootstrap_servers: "${KAFKA_BOOTSTRAP_SERVERS}"
+  source_topic: "${KAFKA_SOURCE_TOPIC}"
+  sink_topic: "${KAFKA_SINK_TOPIC}"
+  consumer_group: "${KAFKA_CONSUMER_GROUP_ID}"
+  starting_offsets: latest
+  fail_on_data_loss: false
+  schema_registry_url: "${KAFKA_SCHEMA_REGISTRY_URL}"
+
+# ── Stream Processing ─────────────────────────────────────────────────────────
+processing:
+  watermark_delay: "10 minutes"
+  window_duration: "5 minutes"
+  slide_duration: "2 minutes"
+  allowed_event_types:
+    - login
+    - logout
+    - purchase
+    - page_view
+    - click
+  required_fields:
+    - event_id
+    - event_type
+    - event_timestamp
+
+# ── Sink ──────────────────────────────────────────────────────────────────────
+sink:
+  format: delta                                # delta | parquet | kafka | console
+  path: "s3://${AWS_S3_BUCKET}/processed/streaming/"
+  output_mode: append
+  partition_by:
+    - event_date
+    - event_type
+
+# ── Retry & Error Handling ────────────────────────────────────────────────────
+error_handling:
+  max_retries: 3
+  retry_backoff_ms: 1000
+  dlq_topic: "${KAFKA_DLQ_TOPIC}"
+  on_schema_error: route_to_dlq             # route_to_dlq | skip | fail
+

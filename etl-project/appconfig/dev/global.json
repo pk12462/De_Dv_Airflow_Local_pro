@@ -1,0 +1,25 @@
+{
+  "generalInfo": {
+    "applicationName": "dataflow-etl",
+    "processType": "BATCH",
+    "logLevel": "INFO",
+    "retryAttempts": 3
+  },
+  "sparkConfig": {
+    "master": "local[*]",
+    "executorMemory": "2g",
+    "driverMemory": "1g",
+    "numExecutors": 2
+  },
+  "loggerDetails": {
+    "checkPointLog": {
+      "capturePayload": true
+    },
+    "logTags": [
+      {
+        "keyColName": "user_id",
+        "hashingRequired": true
+      }
+    ]
+  }
+}

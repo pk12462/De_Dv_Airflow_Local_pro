@@ -1,0 +1,74 @@
+{
+  "generalInfo": {
+    "appName": "dataflow-etl",
+    "processType": "BATCH",
+    "description": "Read user events, transform, filter and write to API"
+  },
+  "mainFlow": [
+    {
+      "transformationList": [
+        {
+          "generalInfo": {
+            "transformationName": "Read_Source_Events",
+            "transformationType": "SOURCE",
+            "order": 1
+          },
+          "props": {
+            "queryFile": "etl-project/queries/source_query.sql"
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "Rename_And_Derive_Cols",
+            "transformationType": "EXPRESSION",
+            "order": 2
+          },
+          "props": {
+            "rules": [
+              "user_id as userId",
+              "event_type as eventType",
+              "amount as transactionAmount",
+              "current_timestamp() as processedAt"
+            ]
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "Remove_Nulls",
+            "transformationType": "FILTER",
+            "order": 3
+          },
+          "props": {
+            "condition": "userId IS NOT NULL"
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "Set_Partitions",
+            "transformationType": "PARTITIONER",
+            "order": 4
+          },
+          "props": {
+            "partitionType": "REPARTITION",
+            "numPartitions": 4
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "Send_To_API",
+            "transformationType": "TARGET",
+            "order": 5
+          },
+          "props": {
+            "targetSystem": "API",
+            "method": "POST",
+            "headers": {
+              "Content-Type": "application/json",
+              "X-Pipeline-Env": "dev"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

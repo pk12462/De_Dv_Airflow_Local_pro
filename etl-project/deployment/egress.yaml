@@ -1,0 +1,12 @@
+egress:
+  enabled: true
+
+hosts:
+  - name: digital-servicing-api
+    port: 443
+    protocol: https
+
+  - name: azure-datalake
+    port: 443
+    protocol: https
+

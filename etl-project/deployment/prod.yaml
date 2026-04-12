@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cust-risk-pipeline-prod
+data:
+  APP_NAME: cust-risk-triggers
+  ENV: prod
+  SPARK_MODE: batch
+  DRIVER_MEMORY: 8g
+  EXECUTOR_MEMORY: 16g
+  EXECUTOR_CORES: "8"
+  NUM_EXECUTORS: "16"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cust-risk-secrets-prod
+type: Opaque
+data:
+  VAULT_SYNAPSE_USER: <base64-placeholder>
+  VAULT_SYNAPSE_PASSWORD: <base64-placeholder>
+

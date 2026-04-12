@@ -1,0 +1,14 @@
+apiVersion: v2
+name: de-dv-platform
+description: Helm chart for streaming apps, batch apps, and Airflow integration
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - airflow
+  - spark
+  - kafka
+  - etl
+maintainers:
+  - name: de-dv-team
+

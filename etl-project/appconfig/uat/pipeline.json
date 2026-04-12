@@ -1,0 +1,89 @@
+{
+  "generalInfo": {
+    "appName": "dataflow-etl",
+    "processType": "BATCH"
+  },
+  "mainFlow": [
+    {
+      "transformationList": [
+        {
+          "generalInfo": {
+            "transformationName": "Read_Source_Events",
+            "transformationType": "SOURCE",
+            "order": 1
+          },
+          "props": {}
+        },
+        {
+          "generalInfo": {
+            "transformationName": "Rename_And_Derive_Cols",
+            "transformationType": "EXPRESSION",
+            "order": 2
+          },
+          "props": {
+            "rules": [
+              "user_id as userId",
+              "event_type as eventType",
+              "amount as transactionAmount",
+              "current_timestamp() as processedAt"
+            ]
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "Enrich_With_Tier",
+            "transformationType": "LOOKUP",
+            "order": 3
+          },
+          "props": {
+            "joinKey": "userId",
+            "joinType": "LEFT",
+            "selectCols": [
+              "userId",
+              "eventType",
+              "transactionAmount",
+              "processedAt",
+              "tier",
+              "region"
+            ]
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "Remove_Nulls",
+            "transformationType": "FILTER",
+            "order": 4
+          },
+          "props": {
+            "condition": "userId IS NOT NULL"
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "Set_Partitions",
+            "transformationType": "PARTITIONER",
+            "order": 5
+          },
+          "props": {
+            "partitionType": "REPARTITION",
+            "numPartitions": 8
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "Send_To_API",
+            "transformationType": "TARGET",
+            "order": 6
+          },
+          "props": {
+            "targetSystem": "API",
+            "method": "POST",
+            "headers": {
+              "X-Pipeline-Env": "uat"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

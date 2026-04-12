@@ -1,0 +1,3 @@
+# Placeholder — preserves the checkpoints directory in version control.
+# Actual checkpoint data is excluded via .gitignore.
+

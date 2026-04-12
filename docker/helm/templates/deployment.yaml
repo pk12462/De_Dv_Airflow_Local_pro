@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "de-dv-platform.fullname" . }}-streaming
+  labels:
+    {{- include "de-dv-platform.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount.streaming }}
+  selector:
+    matchLabels:
+      app: streaming-app
+  template:
+    metadata:
+      labels:
+        app: streaming-app
+    spec:
+      containers:
+        - name: streaming-app
+          image: "{{ .Values.images.streaming.repository }}:{{ .Values.images.streaming.tag }}"
+          imagePullPolicy: {{ .Values.images.streaming.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.streamingPort }}
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.env.KAFKA_BOOTSTRAP_SERVERS | quote }}
+            - name: SPARK_MASTER_URL
+              value: {{ .Values.env.SPARK_MASTER_URL | quote }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "de-dv-platform.fullname" . }}-batch
+  labels:
+    {{- include "de-dv-platform.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount.batch }}
+  selector:
+    matchLabels:
+      app: batch-app
+  template:
+    metadata:
+      labels:
+        app: batch-app
+    spec:
+      containers:
+        - name: batch-app
+          image: "{{ .Values.images.batch.repository }}:{{ .Values.images.batch.tag }}"
+          imagePullPolicy: {{ .Values.images.batch.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.batchPort }}
+

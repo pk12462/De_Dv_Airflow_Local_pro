@@ -1,0 +1,16 @@
+{
+  "database": {
+    "url": "postgresql://localhost:5432/dev_db",
+    "user": "${DB_USER}",
+    "password": "${DB_PASSWORD}"
+  },
+  "api": {
+    "url": "http://localhost:8000/api/events",
+    "authType": "NONE",
+    "timeout": 30
+  },
+  "storage": {
+    "outputPath": "./output/dev",
+    "format": "json"
+  }
+}

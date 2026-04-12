@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "user-event",
+  "description": "A single user event record as it arrives from the source table.",
+  "type": "object",
+  "required": ["user_id", "event_type", "event_date"],
+  "properties": {
+    "user_id":    { "type": ["string"],           "description": "Unique user identifier" },
+    "event_type": { "type": ["string"],           "description": "Type of event: purchase, refund, login, etc." },
+    "amount":     { "type": ["number", "null"],   "description": "Transaction amount (null for non-financial events)" },
+    "event_date": { "type": ["string"],           "description": "Date of the event (YYYY-MM-DD)" },
+    "status":     { "type": ["string", "null"],   "description": "COMPLETED | INCOMPLETE | PENDING" }
+  }
+}
+
