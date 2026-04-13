@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+set -eu
+
+echo "[data_airflow_doc] Running pre-deploy checks..."
+python -m pytest -o addopts="" tests/test_smoke_configs.py -q
+echo "[data_airflow_doc] Build command completed successfully."
+
