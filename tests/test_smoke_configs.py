@@ -25,6 +25,7 @@ def test_required_configs_exist_and_parse():
         root / "scripts" / "windows" / "preflight-etl.ps1",
         root / "scripts" / "cloudflare-build.sh",
         root / "scripts" / "windows" / "cloudflare-build.ps1",
+        root / "data_airflow_doc",
     ]
 
     for path in required:
