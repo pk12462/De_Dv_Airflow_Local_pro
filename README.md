@@ -136,10 +136,13 @@ Cloudflare here acts as secure ingress. The project runtime (Airflow + pipelines
 Set-Location "C:\Users\PAVAN\Local_pro\De_Dv_Airflow_Local_pro\airflow"
 Copy-Item .env.cloudflare.example .env.cloudflare
 # Edit .env.cloudflare and set CLOUDFLARE_TUNNEL_TOKEN
+# Set AIRFLOW_PUBLIC_HOSTNAME to a unique DNS name for this project
+# Set AIRFLOW__WEBSERVER__BASE_URL=https://<your-hostname>
 ```
 
 ```powershell
 Set-Location "C:\Users\PAVAN\Local_pro\De_Dv_Airflow_Local_pro"
+powershell -ExecutionPolicy Bypass -File scripts\windows\preflight-etl.ps1
 powershell -ExecutionPolicy Bypass -File scripts\windows\start-airflow-cloudflare.ps1
 ```
 

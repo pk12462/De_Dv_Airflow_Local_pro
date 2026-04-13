@@ -22,6 +22,7 @@ def test_required_configs_exist_and_parse():
         root / "airflow" / "CLOUDFLARE_TUNNEL_SETUP.md",
         root / "scripts" / "windows" / "start-airflow-cloudflare.ps1",
         root / "scripts" / "windows" / "stop-airflow-cloudflare.ps1",
+        root / "scripts" / "windows" / "preflight-etl.ps1",
     ]
 
     for path in required:
