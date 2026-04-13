@@ -14,7 +14,7 @@ keywords = ["airflow", "kafka", "spark", "streaming", "batch", "etl", "data-engi
 
 dependencies = [
     "python-dotenv>=1.0.1",
-    "pydantic>=2.7.1",
+    "pydantic>=2.7.1,<3",
     "pyyaml>=6.0.1",
     "structlog>=24.1.0",
     "tenacity>=8.3.0",

@@ -1,6 +1,7 @@
 # ─── Core Python ─────────────────────────────────────────────────────────────
 python-dotenv==1.0.1
-pydantic==2.7.1
+pydantic==2.7.1; python_version < "3.13"
+pydantic>=2.11.0,<3; python_version >= "3.13"
 pyyaml==6.0.1
 structlog==24.1.0
 tenacity==8.3.0
