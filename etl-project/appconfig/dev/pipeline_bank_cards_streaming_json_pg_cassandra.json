@@ -12,10 +12,10 @@
   },
   "connections": {
     "postgres": {
-      "connectionRef": "postgres"
+      "connectionRef": "postgres_bank_cards_live_stream"
     },
     "cassandra": {
-      "connectionRef": "cassandra"
+      "connectionRef": "cassandra_bank_cards_live_stream"
     }
   },
   "mainFlow": [

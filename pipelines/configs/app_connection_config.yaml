@@ -74,6 +74,115 @@ connections:
       username: "${CASSANDRA_USERNAME}"
       password: "${CASSANDRA_PASSWORD}"
 
+  # ── Per-pipeline connection sets (learning project) ─────────────────────
+  postgres_local_batch:
+    type: postgres
+    host: "${POSTGRES_HOST}"
+    port: "${POSTGRES_PORT}"
+    database: "${POSTGRES_DB}"
+    credentials:
+      username: "${POSTGRES_USER}"
+      password: "${POSTGRES_PASSWORD}"
+
+  cassandra_local_batch:
+    type: cassandra
+    hosts: ["${CASSANDRA_HOST}"]
+    port: "${CASSANDRA_PORT}"
+    keyspace: "${CASSANDRA_KEYSPACE}"
+    credentials:
+      username: "${CASSANDRA_USERNAME}"
+      password: "${CASSANDRA_PASSWORD}"
+
+  postgres_local_streaming:
+    type: postgres
+    host: "${POSTGRES_HOST}"
+    port: "${POSTGRES_PORT}"
+    database: "${POSTGRES_DB}"
+    credentials:
+      username: "${POSTGRES_USER}"
+      password: "${POSTGRES_PASSWORD}"
+
+  cassandra_local_streaming:
+    type: cassandra
+    hosts: ["${CASSANDRA_HOST}"]
+    port: "${CASSANDRA_PORT}"
+    keyspace: "${CASSANDRA_KEYSPACE}"
+    credentials:
+      username: "${CASSANDRA_USERNAME}"
+      password: "${CASSANDRA_PASSWORD}"
+
+  postgres_city_trips_batch:
+    type: postgres
+    host: "${POSTGRES_HOST}"
+    port: "${POSTGRES_PORT}"
+    database: "${POSTGRES_DB}"
+    credentials:
+      username: "${POSTGRES_USER}"
+      password: "${POSTGRES_PASSWORD}"
+
+  cassandra_city_trips_batch:
+    type: cassandra
+    hosts: ["${CASSANDRA_HOST}"]
+    port: "${CASSANDRA_PORT}"
+    keyspace: "${CASSANDRA_KEYSPACE}"
+    credentials:
+      username: "${CASSANDRA_USERNAME}"
+      password: "${CASSANDRA_PASSWORD}"
+
+  postgres_bank_cards_daily_batch:
+    type: postgres
+    host: "${POSTGRES_HOST}"
+    port: "${POSTGRES_PORT}"
+    database: "${POSTGRES_DB}"
+    credentials:
+      username: "${POSTGRES_USER}"
+      password: "${POSTGRES_PASSWORD}"
+
+  cassandra_bank_cards_daily_batch:
+    type: cassandra
+    hosts: ["${CASSANDRA_HOST}"]
+    port: "${CASSANDRA_PORT}"
+    keyspace: "${CASSANDRA_KEYSPACE}"
+    credentials:
+      username: "${CASSANDRA_USERNAME}"
+      password: "${CASSANDRA_PASSWORD}"
+
+  postgres_bank_cards_pipe_batch:
+    type: postgres
+    host: "${POSTGRES_HOST}"
+    port: "${POSTGRES_PORT}"
+    database: "${POSTGRES_DB}"
+    credentials:
+      username: "${POSTGRES_USER}"
+      password: "${POSTGRES_PASSWORD}"
+
+  cassandra_bank_cards_pipe_batch:
+    type: cassandra
+    hosts: ["${CASSANDRA_HOST}"]
+    port: "${CASSANDRA_PORT}"
+    keyspace: "${CASSANDRA_KEYSPACE}"
+    credentials:
+      username: "${CASSANDRA_USERNAME}"
+      password: "${CASSANDRA_PASSWORD}"
+
+  postgres_bank_cards_live_stream:
+    type: postgres
+    host: "${POSTGRES_HOST}"
+    port: "${POSTGRES_PORT}"
+    database: "${POSTGRES_DB}"
+    credentials:
+      username: "${POSTGRES_USER}"
+      password: "${POSTGRES_PASSWORD}"
+
+  cassandra_bank_cards_live_stream:
+    type: cassandra
+    hosts: ["${CASSANDRA_HOST}"]
+    port: "${CASSANDRA_PORT}"
+    keyspace: "${CASSANDRA_KEYSPACE}"
+    credentials:
+      username: "${CASSANDRA_USERNAME}"
+      password: "${CASSANDRA_PASSWORD}"
+
   # ── Amazon S3 ─────────────────────────────────────────────────────────────
   s3:
     type: s3

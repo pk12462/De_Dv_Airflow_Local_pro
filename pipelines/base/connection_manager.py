@@ -46,15 +46,17 @@ class ConnectionManager:
         if "port" in merged and isinstance(merged["port"], str) and merged["port"].isdigit():
             merged["port"] = int(merged["port"])
 
+        conn_type = str(merged.get("type", "")).lower()
+
         # Local-friendly defaults for learning setup when env vars are not exported.
-        if ref == "postgres":
+        if conn_type == "postgres" or ref == "postgres":
             if not merged.get("host"):
                 merged["host"] = "localhost"
             if not merged.get("port"):
                 merged["port"] = 5432
             if not merged.get("database"):
                 merged["database"] = "learning_db"
-        if ref == "cassandra":
+        if conn_type == "cassandra" or ref == "cassandra":
             hosts = merged.get("hosts")
             if not hosts:
                 merged["hosts"] = [merged.get("host") or "127.0.0.1"]

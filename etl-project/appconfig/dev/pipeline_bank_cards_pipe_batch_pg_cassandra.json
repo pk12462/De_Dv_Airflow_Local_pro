@@ -7,10 +7,10 @@
   },
   "connections": {
     "postgres": {
-      "connectionRef": "postgres"
+      "connectionRef": "postgres_bank_cards_pipe_batch"
     },
     "cassandra": {
-      "connectionRef": "cassandra"
+      "connectionRef": "cassandra_bank_cards_pipe_batch"
     }
   },
   "mainFlow": [

@@ -7,10 +7,10 @@
   },
   "connections": {
     "postgres": {
-      "connectionRef": "postgres"
+      "connectionRef": "postgres_city_trips_batch"
     },
     "cassandra": {
-      "connectionRef": "cassandra"
+      "connectionRef": "cassandra_city_trips_batch"
     }
   },
   "mainFlow": [

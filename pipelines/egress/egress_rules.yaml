@@ -45,38 +45,90 @@ rules:
     rate_limit:
       enabled: false
 
-  # PostgreSQL database
-  - name: postgres-db
-    destination:
-      hosts:
-        - "${POSTGRES_HOST}"
-        - "postgres"
-        - "localhost"
-      ports: [5432]
+  # PostgreSQL/Cassandra egress rules - one set per pipeline
+  - name: postgres-local-batch
+    destination: {hosts: ["${POSTGRES_HOST}", "postgres", "localhost"], ports: [5432]}
     protocol: TCP
     tls_required: false
-    allowed_pipelines: ["*"]
-    rate_limit:
-      enabled: true
-      max_connections: 10
-      connection_timeout_seconds: 30
+    allowed_pipelines: ["local_batch_to_postgres_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
 
-  # Cassandra database
-  - name: cassandra-db
-    destination:
-      hosts:
-        - "${CASSANDRA_HOST}"
-        - "cassandra"
-        - "localhost"
-        - "127.0.0.1"
-      ports: [9042]
+  - name: cassandra-local-batch
+    destination: {hosts: ["${CASSANDRA_HOST}", "cassandra", "localhost", "127.0.0.1"], ports: [9042]}
     protocol: TCP
     tls_required: false
-    allowed_pipelines: ["*"]
-    rate_limit:
-      enabled: true
-      max_connections: 10
-      connection_timeout_seconds: 30
+    allowed_pipelines: ["local_batch_to_postgres_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
+
+  - name: postgres-local-streaming
+    destination: {hosts: ["${POSTGRES_HOST}", "postgres", "localhost"], ports: [5432]}
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["local_streaming_to_postgres_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
+
+  - name: cassandra-local-streaming
+    destination: {hosts: ["${CASSANDRA_HOST}", "cassandra", "localhost", "127.0.0.1"], ports: [9042]}
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["local_streaming_to_postgres_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
+
+  - name: postgres-city-trips-batch
+    destination: {hosts: ["${POSTGRES_HOST}", "postgres", "localhost"], ports: [5432]}
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["city_trips_batch_pg_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
+
+  - name: cassandra-city-trips-batch
+    destination: {hosts: ["${CASSANDRA_HOST}", "cassandra", "localhost", "127.0.0.1"], ports: [9042]}
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["city_trips_batch_pg_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
+
+  - name: postgres-bank-cards-daily-batch
+    destination: {hosts: ["${POSTGRES_HOST}", "postgres", "localhost"], ports: [5432]}
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["bank_cards_daily_batch_pg_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
+
+  - name: cassandra-bank-cards-daily-batch
+    destination: {hosts: ["${CASSANDRA_HOST}", "cassandra", "localhost", "127.0.0.1"], ports: [9042]}
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["bank_cards_daily_batch_pg_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
+
+  - name: postgres-bank-cards-pipe-batch
+    destination: {hosts: ["${POSTGRES_HOST}", "postgres", "localhost"], ports: [5432]}
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["bank_cards_pipe_batch_pg_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
+
+  - name: cassandra-bank-cards-pipe-batch
+    destination: {hosts: ["${CASSANDRA_HOST}", "cassandra", "localhost", "127.0.0.1"], ports: [9042]}
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["bank_cards_pipe_batch_pg_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
+
+  - name: postgres-bank-cards-live-stream
+    destination: {hosts: ["${POSTGRES_HOST}", "postgres", "localhost"], ports: [5432]}
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["bank_cards_live_stream_pg_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
+
+  - name: cassandra-bank-cards-live-stream
+    destination: {hosts: ["${CASSANDRA_HOST}", "cassandra", "localhost", "127.0.0.1"], ports: [9042]}
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["bank_cards_live_stream_pg_cassandra"]
+    rate_limit: {enabled: true, max_connections: 10, connection_timeout_seconds: 30}
 
   # Amazon S3
   - name: aws-s3
