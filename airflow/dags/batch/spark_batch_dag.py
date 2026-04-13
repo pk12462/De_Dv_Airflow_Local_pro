@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 
-from plugins.operators.spark_batch_operator import SparkBatchOperator
+from operators.spark_batch_operator import SparkBatchOperator
 
 
 default_args = {

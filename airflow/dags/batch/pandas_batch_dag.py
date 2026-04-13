@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 
-from plugins.operators.pandas_batch_operator import PandasBatchOperator
+from operators.pandas_batch_operator import PandasBatchOperator
 
 
 default_args = {

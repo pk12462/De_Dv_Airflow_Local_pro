@@ -24,8 +24,8 @@ import logging
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
-from airflow.operators.dummy import DummyOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.operators.empty import EmptyOperator
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.models import Variable
 from airflow.utils.decorators import apply_defaults
@@ -179,7 +179,7 @@ def on_failure_callback(context: Dict[str, Any]) -> None:
 # ============================================================================
 
 # Start task
-start = DummyOperator(
+start = EmptyOperator(
     task_id='start',
     dag=dag,
 )
@@ -216,7 +216,7 @@ extract = BashOperator(
       --date {{ ds }} \
       --mode normal
     """,
-    environment={
+    env={
         'PYTHONPATH': '/workspace/batch_apps:/workspace/pipelines',
         'SPARK_HOME': '/opt/spark',
     },
@@ -240,9 +240,9 @@ quality_report = PythonOperator(
 )
 
 # Validate database integrity
-db_integrity = PostgresOperator(
+db_integrity = SQLExecuteQueryOperator(
     task_id='validate_db_integrity',
-    postgres_conn_id='postgres_bank',
+    conn_id='postgres_bank',
     sql="""
     BEGIN;
     
@@ -283,9 +283,9 @@ db_integrity = PostgresOperator(
 )
 
 # Archive old data
-archive_data = PostgresOperator(
+archive_data = SQLExecuteQueryOperator(
     task_id='archive_old_data',
-    postgres_conn_id='postgres_bank',
+    conn_id='postgres_bank',
     sql="""
     -- Archive records older than 90 days (optional)
     -- INSERT INTO cust_risk_triggers_archive
@@ -327,7 +327,7 @@ metrics_report = BashOperator(
 )
 
 # End task
-end = DummyOperator(
+end = EmptyOperator(
     task_id='end',
     dag=dag,
 )

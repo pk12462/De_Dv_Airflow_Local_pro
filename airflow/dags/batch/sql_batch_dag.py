@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 
-from plugins.operators.sql_batch_operator import SqlBatchOperator
+from operators.sql_batch_operator import SqlBatchOperator
 
 
 default_args = {

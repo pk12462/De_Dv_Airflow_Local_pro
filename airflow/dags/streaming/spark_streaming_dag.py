@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 
-from plugins.operators.spark_streaming_operator import SparkStreamingOperator
+from operators.spark_streaming_operator import SparkStreamingOperator
 
 
 default_args = {

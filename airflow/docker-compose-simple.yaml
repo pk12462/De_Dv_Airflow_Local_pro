@@ -37,10 +37,34 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
+      - ../etl-project:/opt/airflow/etl-project
       - ../pipelines:/opt/airflow/pipelines
       - ../batch_apps:/opt/airflow/batch_apps
       - ../streaming_apps:/opt/airflow/streaming_apps
     command: bash -c "airflow db migrate && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com 2>/dev/null || true && airflow webserver"
+
+  airflow-scheduler:
+    image: apache/airflow:2.11.0
+    platform: linux/amd64
+    container_name: airflow-scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ../etl-project:/opt/airflow/etl-project
+      - ../pipelines:/opt/airflow/pipelines
+      - ../batch_apps:/opt/airflow/batch_apps
+      - ../streaming_apps:/opt/airflow/streaming_apps
+    command: bash -c "airflow db migrate && airflow scheduler"
 
 volumes:
   postgres_data:
