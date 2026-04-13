@@ -1,4 +1,4 @@
-name = "de-dv-airflow-gateway"
+name = "dataeng"
 main = "cloudflare/airflow_gateway_worker.js"
 compatibility_date = "2026-04-13"
 workers_dev = true
