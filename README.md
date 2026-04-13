@@ -112,6 +112,39 @@ docker-compose up -d
 # Access Airflow UI at http://localhost:8080 (admin/admin)
 ```
 
+### 3.1 Keep Airflow Always Running (Windows)
+
+```powershell
+Set-Location "C:\Users\PAVAN\Local_pro\De_Dv_Airflow_Local_pro"
+powershell -ExecutionPolicy Bypass -File scripts\windows\start-airflow.ps1
+powershell -ExecutionPolicy Bypass -File scripts\windows\wait-airflow-ready.ps1
+powershell -ExecutionPolicy Bypass -File scripts\windows\unpause-pipeline-dags.ps1
+```
+
+To auto-start on every Windows login:
+
+```powershell
+Set-Location "C:\Users\PAVAN\Local_pro\De_Dv_Airflow_Local_pro"
+powershell -ExecutionPolicy Bypass -File scripts\windows\install-airflow-autostart.ps1
+```
+
+### 3.2 Expose Airflow via Cloudflare Tunnel
+
+Cloudflare here acts as secure ingress. The project runtime (Airflow + pipelines) still runs in Docker.
+
+```powershell
+Set-Location "C:\Users\PAVAN\Local_pro\De_Dv_Airflow_Local_pro\airflow"
+Copy-Item .env.cloudflare.example .env.cloudflare
+# Edit .env.cloudflare and set CLOUDFLARE_TUNNEL_TOKEN
+```
+
+```powershell
+Set-Location "C:\Users\PAVAN\Local_pro\De_Dv_Airflow_Local_pro"
+powershell -ExecutionPolicy Bypass -File scripts\windows\start-airflow-cloudflare.ps1
+```
+
+Detailed guide: `airflow/CLOUDFLARE_TUNNEL_SETUP.md`
+
 ### 4. Deploy with Helm (Kubernetes)
 
 ```bash

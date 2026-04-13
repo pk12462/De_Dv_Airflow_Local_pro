@@ -26,6 +26,7 @@ x-airflow-common: &airflow-common
 services:
   postgres:
     image: postgres:16
+    restart: unless-stopped
     environment:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
@@ -41,6 +42,7 @@ services:
 
   airflow-init:
     <<: *airflow-common
+    restart: "no"
     entrypoint: /bin/bash
     command:
       - -c
@@ -56,7 +58,13 @@ services:
 
   airflow-webserver:
     <<: *airflow-common
+    restart: unless-stopped
     command: bash -c "airflow webserver"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
     ports:
       - "8080:8080"
     healthcheck:
@@ -67,8 +75,19 @@ services:
 
   airflow-scheduler:
     <<: *airflow-common
+    restart: unless-stopped
     command: bash -c "airflow scheduler"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
     entrypoint: ["/entrypoint"]
+    healthcheck:
+      test: ["CMD", "airflow", "jobs", "check", "--job-type", "SchedulerJob", "--hostname", "$$HOSTNAME"]
+      interval: 30s
+      retries: 5
+      start_period: 30s
 
 
 volumes:
