@@ -6,14 +6,14 @@ structlog==24.1.0
 tenacity==8.3.0
 
 # ─── Apache Airflow 2.11 ─────────────────────────────────────────────────────
-apache-airflow==2.11.2
-apache-airflow-providers-apache-spark==4.9.0
-apache-airflow-providers-apache-kafka==1.4.0
-apache-airflow-providers-postgres==5.11.0
-apache-airflow-providers-amazon==8.26.0
-apache-airflow-providers-cncf-kubernetes==8.4.1
-apache-airflow-providers-redis==3.7.2
-apache-airflow-providers-celery==3.7.2
+apache-airflow==2.11.2; python_version >= "3.9" and python_version < "3.13"
+apache-airflow-providers-apache-spark==4.9.0; python_version < "3.13"
+apache-airflow-providers-apache-kafka==1.4.0; python_version < "3.13"
+apache-airflow-providers-postgres==5.11.0; python_version < "3.13"
+apache-airflow-providers-amazon==8.26.0; python_version < "3.13"
+apache-airflow-providers-cncf-kubernetes==8.4.1; python_version < "3.13"
+apache-airflow-providers-redis==3.7.1; python_version < "3.13"
+apache-airflow-providers-celery==3.7.1; python_version < "3.13"
 
 # ─── Kafka ────────────────────────────────────────────────────────────────────
 kafka-python==2.0.2

@@ -7,7 +7,7 @@ name = "de-dv-airflow-local-pro"
 version = "1.0.0"
 description = "Comprehensive Data Engineering Platform with Streaming, Batch, Pipelines and Airflow 2.11"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 license = { text = "MIT" }
 authors = [{ name = "DE/DV Team" }]
 keywords = ["airflow", "kafka", "spark", "streaming", "batch", "etl", "data-engineering"]
