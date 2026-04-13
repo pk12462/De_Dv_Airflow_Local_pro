@@ -23,6 +23,8 @@ def test_required_configs_exist_and_parse():
         root / "scripts" / "windows" / "start-airflow-cloudflare.ps1",
         root / "scripts" / "windows" / "stop-airflow-cloudflare.ps1",
         root / "scripts" / "windows" / "preflight-etl.ps1",
+        root / "scripts" / "cloudflare-build.sh",
+        root / "scripts" / "windows" / "cloudflare-build.ps1",
     ]
 
     for path in required:

@@ -148,6 +148,23 @@ powershell -ExecutionPolicy Bypass -File scripts\windows\start-airflow-cloudflar
 
 Detailed guide: `airflow/CLOUDFLARE_TUNNEL_SETUP.md`
 
+### 3.3 Cloudflare Build/Deploy Commands
+
+Use these commands in Cloudflare project settings:
+
+```text
+Build command: sh scripts/cloudflare-build.sh
+Deploy command: npx wrangler deploy
+```
+
+If you are running from Windows locally:
+
+```powershell
+Set-Location "C:\Users\PAVAN\Local_pro\De_Dv_Airflow_Local_pro"
+powershell -ExecutionPolicy Bypass -File scripts\windows\cloudflare-build.ps1
+npx wrangler deploy
+```
+
 ### 4. Deploy with Helm (Kubernetes)
 
 ```bash
