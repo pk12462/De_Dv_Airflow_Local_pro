@@ -90,6 +90,28 @@ services:
       retries: 5
       start_period: 30s
 
+  airflow-triggerer:
+    <<: *airflow-common
+    restart: unless-stopped
+    command: bash -c "airflow triggerer"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    entrypoint: ["/entrypoint"]
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    restart: unless-stopped
+    command: bash -c "airflow dag-processor"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    entrypoint: ["/entrypoint"]
+
 
 volumes:
   postgres-db-volume:

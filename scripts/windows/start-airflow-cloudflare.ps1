@@ -23,6 +23,7 @@ if (-not $hostLine) {
 
 docker compose --env-file .env -f docker-compose.yaml up -d airflow-init
 docker compose --env-file .env --env-file .env.cloudflare -f docker-compose.yaml -f docker-compose.cloudflare.yaml up -d
+docker compose --env-file .env --env-file .env.cloudflare -f docker-compose.yaml -f docker-compose.cloudflare.yaml up -d airflow-triggerer airflow-dag-processor
 
 docker compose -f docker-compose.yaml -f docker-compose.cloudflare.yaml ps
 

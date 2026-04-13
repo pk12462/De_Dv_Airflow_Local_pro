@@ -6,7 +6,7 @@ $airflowDir = Join-Path $root "airflow"
 Set-Location $airflowDir
 
 docker compose up -d airflow-init
-docker compose up -d postgres airflow-webserver airflow-scheduler
+docker compose up -d postgres airflow-webserver airflow-scheduler airflow-triggerer airflow-dag-processor
 
 docker compose ps
 
