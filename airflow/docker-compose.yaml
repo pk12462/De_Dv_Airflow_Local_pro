@@ -1,16 +1,12 @@
 version: '3.8'
 
 x-airflow-common: &airflow-common
-  build:
-    context: ..
-    dockerfile: docker/base/Dockerfile.airflow
+  image: apache/airflow:2.11.0-python3.11
   env_file:
     - .env
   environment:
-    AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR:-CeleryExecutor}
+    AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR:-LocalExecutor}
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN}
-    AIRFLOW__CELERY__RESULT_BACKEND: ${AIRFLOW__CELERY__RESULT_BACKEND}
-    AIRFLOW__CELERY__BROKER_URL: ${AIRFLOW__CELERY__BROKER_URL}
     AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: ${AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION:-true}
     AIRFLOW__CORE__LOAD_EXAMPLES: ${AIRFLOW__CORE__LOAD_EXAMPLES:-false}
@@ -23,10 +19,9 @@ x-airflow-common: &airflow-common
     - ../batch_apps:/opt/airflow/batch_apps
     - ../streaming_apps:/opt/airflow/streaming_apps
     - ../etl-project:/opt/airflow/etl-project
-  user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-0}"
   depends_on:
-    - postgres
-    - redis
+    postgres:
+      condition: service_healthy
 
 services:
   postgres:
@@ -35,17 +30,14 @@ services:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "airflow"]
       interval: 10s
       retries: 5
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7
-    expose:
-      - 6379
 
   airflow-init:
     <<: *airflow-common
@@ -60,25 +52,24 @@ services:
           --firstname Admin \
           --lastname User \
           --role Admin \
-          --email admin@example.com
+          --email admin@example.com || true
 
   airflow-webserver:
     <<: *airflow-common
-    command: webserver
+    command: bash -c "airflow webserver"
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      retries: 5
+    entrypoint: ["/entrypoint"]
 
   airflow-scheduler:
     <<: *airflow-common
-    command: scheduler
+    command: bash -c "airflow scheduler"
+    entrypoint: ["/entrypoint"]
 
-  airflow-triggerer:
-    <<: *airflow-common
-    command: triggerer
-
-  airflow-worker:
-    <<: *airflow-common
-    command: celery worker
 
 volumes:
   postgres-db-volume:
