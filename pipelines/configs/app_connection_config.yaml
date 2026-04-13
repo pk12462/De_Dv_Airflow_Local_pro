@@ -63,6 +63,17 @@ connections:
       pool_pre_ping: true
     schema: public
 
+  # ── Cassandra ─────────────────────────────────────────────────────────────
+  cassandra:
+    type: cassandra
+    hosts:
+      - "${CASSANDRA_HOST}"
+    port: "${CASSANDRA_PORT}"
+    keyspace: "${CASSANDRA_KEYSPACE}"
+    credentials:
+      username: "${CASSANDRA_USERNAME}"
+      password: "${CASSANDRA_PASSWORD}"
+
   # ── Amazon S3 ─────────────────────────────────────────────────────────────
   s3:
     type: s3

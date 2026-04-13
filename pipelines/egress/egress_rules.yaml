@@ -55,8 +55,24 @@ rules:
       ports: [5432]
     protocol: TCP
     tls_required: false
-    allowed_pipelines:
-      - daily-batch-etl-pipeline
+    allowed_pipelines: ["*"]
+    rate_limit:
+      enabled: true
+      max_connections: 10
+      connection_timeout_seconds: 30
+
+  # Cassandra database
+  - name: cassandra-db
+    destination:
+      hosts:
+        - "${CASSANDRA_HOST}"
+        - "cassandra"
+        - "localhost"
+        - "127.0.0.1"
+      ports: [9042]
+    protocol: TCP
+    tls_required: false
+    allowed_pipelines: ["*"]
     rate_limit:
       enabled: true
       max_connections: 10

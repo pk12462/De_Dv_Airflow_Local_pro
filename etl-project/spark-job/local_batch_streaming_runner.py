@@ -4,10 +4,18 @@ import argparse
 import csv
 import json
 import logging
+import os
+import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from pipelines.base.connection_manager import ConnectionManager
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -32,7 +40,7 @@ def _apply_transforms(records: list[dict[str, Any]], transforms: list[dict[str, 
             out = [r for r in out if r.get(col) not in (None, "")]
         elif t_type == "add_current_timestamp":
             col = t.get("column", "processed_at")
-            now = datetime.utcnow().isoformat()
+            now = datetime.now(timezone.utc).isoformat()
             out = [{**r, col: now} for r in out]
     return out
 
@@ -52,18 +60,142 @@ def _read_jsonl_file(path: Path) -> list[dict[str, Any]]:
     return records
 
 
-def _resolve_source_path(path_value: str) -> Path:
-    source_path = Path(path_value)
-    if source_path.is_absolute():
-        return source_path
+def _expand_carid(path_value: str) -> str:
+    carid = os.getenv("CARID", "8999")
+    return path_value.replace("${CARID}", carid).replace("{CARID}", carid)
 
-    candidates = [source_path, Path.cwd() / source_path, Path("/opt/airflow") / source_path]
+
+def _map_adls_to_local(path_value: str) -> list[Path]:
+    normalized = _expand_carid(path_value).replace("\\", "/")
+    if not normalized.startswith("/mnt/"):
+        return []
+
+    parts = normalized.split("/")
+    # /mnt/<mount>/inbound/<domain>/<file>
+    relative_parts = parts[4:] if len(parts) > 4 and parts[3] == "inbound" else parts[3:]
+    if not relative_parts:
+        return []
+
+    project_root = Path(__file__).resolve().parents[1]
+    local_root_candidates = [
+        Path("/opt/airflow") / "etl-project" / "local_source",
+        project_root / "local_source",
+    ]
+
+    candidates: list[Path] = []
+    for root in local_root_candidates:
+        candidates.append(root.joinpath(*relative_parts))
+        candidates.append(root / relative_parts[-1])
+    return candidates
+
+
+def _resolve_source_path(path_value: str) -> Path:
+    expanded = _expand_carid(path_value)
+    source_path = Path(expanded)
+
+    candidates: list[Path] = [source_path]
+    candidates.extend(_map_adls_to_local(expanded))
+
+    if not source_path.is_absolute():
+        candidates.extend(
+            [
+                Path.cwd() / source_path,
+                Path("/opt/airflow") / source_path,
+                Path(__file__).resolve().parents[2] / source_path,
+            ]
+        )
+
     for candidate in candidates:
         if candidate.exists():
             return candidate
 
-    # Fallback for clearer container behavior when running from temp dirs.
-    return Path("/opt/airflow") / source_path
+    return candidates[0]
+
+
+def _normalize_pipeline_config(cfg: dict[str, Any]) -> dict[str, Any]:
+    if "source" in cfg and "targets" in cfg:
+        return cfg
+
+    gi = cfg.get("generalInfo", {})
+    mode = str(cfg.get("mode") or gi.get("processType", "batch")).lower()
+    mode = "streaming" if mode.startswith("stream") else "batch"
+
+    normalized: dict[str, Any] = {
+        "pipelineName": cfg.get("pipelineName") or gi.get("appName", "pipeline"),
+        "mode": mode,
+        "source": {},
+        "transforms": [],
+        "targets": [],
+        "connections": cfg.get("connections", {}),
+        "streaming": cfg.get("streaming", {}),
+    }
+
+    transformations = cfg.get("mainFlow", [{}])[0].get("transformationList", [])
+    transformations = sorted(transformations, key=lambda t: int(t.get("generalInfo", {}).get("order", 0)))
+
+    for t in transformations:
+        t_info = t.get("generalInfo", {})
+        t_props = t.get("props", {})
+        t_type = str(t_info.get("transformationType", "")).lower()
+
+        if t_type == "source" and not normalized["source"]:
+            src_sys = str(t_props.get("srcSysName", "local_csv")).lower()
+            src_props = t_props.get("srcSysProp", {})
+            source_type = src_sys if src_sys.startswith("local_") else "local_csv"
+            source_path = (
+                src_props.get("filePath")
+                or src_props.get("path")
+                or src_props.get("localFallbackPath")
+                or src_props.get("inputPath")
+            )
+            if not source_path:
+                raise ValueError("Source filePath/path is required in source transformation")
+            normalized["source"] = {
+                "type": source_type,
+                "path": source_path,
+                "delimiter": src_props.get("delimiter", "|"),
+            }
+            continue
+
+        if t_type == "expression":
+            runtime_transform = t_props.get("runtimeTransform")
+            if isinstance(runtime_transform, dict):
+                normalized["transforms"].append(runtime_transform)
+            elif "processed_at" in str(t_props.get("trnsfmRules", "")).lower():
+                normalized["transforms"].append({"type": "add_current_timestamp", "column": "processed_at"})
+            continue
+
+        if t_type == "filter":
+            column = t_props.get("column")
+            if not column and "condition" in t_props:
+                condition = str(t_props.get("condition", ""))
+                column = condition.split(" ", 1)[0] if " " in condition else condition
+            if column:
+                normalized["transforms"].append({"type": "filter_not_null", "column": column})
+            continue
+
+        if t_type == "target":
+            tgt_sys = str(t_props.get("tgtSysName", "")).lower()
+            tgt_props = t_props.get("tgtSysProp", {})
+            if "postgres" in tgt_sys:
+                normalized["targets"].append(
+                    {
+                        "type": "postgres",
+                        "table": tgt_props.get("table") or tgt_props.get("tableName") or "events",
+                    }
+                )
+            elif "cassandra" in tgt_sys:
+                normalized["targets"].append(
+                    {
+                        "type": "cassandra",
+                        "keyspace": tgt_props.get("keyspace", "learning"),
+                        "table": tgt_props.get("table") or tgt_props.get("tableName") or "events",
+                    }
+                )
+
+    if not normalized["source"]:
+        raise ValueError("Pipeline config did not contain a SOURCE transformation")
+    return normalized
 
 
 def _read_source_records(source_cfg: dict[str, Any]) -> list[dict[str, Any]]:
@@ -138,13 +270,28 @@ def run_batch(config: dict[str, Any], dry_run: bool) -> int:
     rows = _read_source_records(config["source"])
 
     rows = _apply_transforms(rows, config.get("transforms", []))
-    connections = config.get("connections", {})
+    conn_manager = ConnectionManager()
+    connections = conn_manager.resolve_all(config.get("connections", {}))
+    pipeline_name = str(config.get("pipelineName", "learning_pipeline"))
 
     for t in config.get("targets", []):
         t_type = str(t.get("type", "")).lower()
         if t_type == "postgres":
+            pg_conn = connections.get("postgres", {})
+            conn_manager.assert_egress(
+                pipeline_name,
+                host=str(pg_conn.get("host", "localhost")),
+                port=int(pg_conn.get("port", 5432)),
+            )
             _write_postgres(rows, connections.get("postgres", {}), t.get("table", "events"), dry_run)
         elif t_type == "cassandra":
+            cs_conn = connections.get("cassandra", {})
+            hosts = cs_conn.get("hosts") or [cs_conn.get("host", "127.0.0.1")]
+            conn_manager.assert_egress(
+                pipeline_name,
+                host=str(hosts[0]),
+                port=int(cs_conn.get("port", 9042)),
+            )
             _write_cassandra(
                 rows,
                 connections.get("cassandra", {}),
@@ -174,7 +321,9 @@ def run_streaming(config: dict[str, Any], dry_run: bool) -> int:
     max_batches = int(config.get("streaming", {}).get("max_batches", 2))
     batch_size = int(config.get("streaming", {}).get("batch_size", 25))
 
-    connections = config.get("connections", {})
+    conn_manager = ConnectionManager()
+    connections = conn_manager.resolve_all(config.get("connections", {}))
+    pipeline_name = str(config.get("pipelineName", "learning_pipeline"))
     all_records = _read_source_records(source_cfg)
 
     for batch_no in range(1, max_batches + 1):
@@ -188,8 +337,21 @@ def run_streaming(config: dict[str, Any], dry_run: bool) -> int:
         for t in config.get("targets", []):
             t_type = str(t.get("type", "")).lower()
             if t_type == "postgres":
+                pg_conn = connections.get("postgres", {})
+                conn_manager.assert_egress(
+                    pipeline_name,
+                    host=str(pg_conn.get("host", "localhost")),
+                    port=int(pg_conn.get("port", 5432)),
+                )
                 _write_postgres(rows, connections.get("postgres", {}), t.get("table", "events_stream"), dry_run)
             elif t_type == "cassandra":
+                cs_conn = connections.get("cassandra", {})
+                hosts = cs_conn.get("hosts") or [cs_conn.get("host", "127.0.0.1")]
+                conn_manager.assert_egress(
+                    pipeline_name,
+                    host=str(hosts[0]),
+                    port=int(cs_conn.get("port", 9042)),
+                )
                 _write_cassandra(
                     rows,
                     connections.get("cassandra", {}),
@@ -213,7 +375,7 @@ def main() -> int:
     p.add_argument("--dry-run", action="store_true", help="Do not write to targets")
     args = p.parse_args()
 
-    cfg = _load_json(Path(args.config))
+    cfg = _normalize_pipeline_config(_load_json(Path(args.config)))
     mode = str(cfg.get("mode", "batch")).lower()
 
     if mode == "batch":

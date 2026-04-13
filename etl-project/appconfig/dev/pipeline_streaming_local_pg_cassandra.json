@@ -1,35 +1,103 @@
 {
-  "pipelineName": "local-streaming-to-postgres-cassandra",
-  "mode": "streaming",
-  "source": {
-    "type": "local_jsonl_dir",
-    "path": "etl-project/local_source/streaming"
+  "generalInfo": {
+    "appName": "local_streaming_to_postgres_cassandra",
+    "processType": "Streaming",
+    "carId": "${CARID}",
+    "deploymentType": "OnPrem"
   },
   "streaming": {
     "poll_interval_sec": 2,
-    "max_batches": 2
+    "max_batches": 2,
+    "batch_size": 25
   },
-  "transforms": [
-    {"type": "filter_not_null", "column": "user_id"},
-    {"type": "add_current_timestamp", "column": "processed_at"}
-  ],
-  "targets": [
-    {"type": "postgres", "table": "events_learning_stream"},
-    {"type": "cassandra", "keyspace": "learning", "table": "events_learning_stream"}
-  ],
   "connections": {
     "postgres": {
-      "host": "localhost",
-      "port": 5432,
-      "database": "learning_db",
-      "user": "postgres",
-      "password": "postgres"
+      "connectionRef": "postgres"
     },
     "cassandra": {
-      "hosts": ["127.0.0.1"],
-      "port": 9042,
-      "keyspace": "learning"
+      "connectionRef": "cassandra"
     }
-  }
+  },
+  "mainFlow": [
+    {
+      "transformationList": [
+        {
+          "generalInfo": {
+            "transformationName": "events_stream_source",
+            "transformationType": "Source",
+            "order": 0
+          },
+          "props": {
+            "srcSysName": "local_jsonl_dir",
+            "srcSysProp": {
+              "filePath": "/mnt/${CARID}-cda-fileshare-1/inbound/streaming"
+            }
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "expression1",
+            "transformationType": "expression",
+            "order": 1
+          },
+          "props": {
+            "runtimeTransform": {
+              "type": "add_current_timestamp",
+              "column": "processed_at"
+            }
+          },
+          "inbound": {
+            "src1": "events_stream_source"
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "filter1",
+            "transformationType": "filter",
+            "order": 2
+          },
+          "props": {
+            "column": "user_id"
+          },
+          "inbound": {
+            "src1": "expression1"
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "PostgreSQL-target",
+            "transformationType": "Target",
+            "order": 3
+          },
+          "props": {
+            "tgtSysName": "PostgreSQL",
+            "tgtSysProp": {
+              "table": "events_learning_stream"
+            }
+          },
+          "inbound": {
+            "src1": "filter1"
+          }
+        },
+        {
+          "generalInfo": {
+            "transformationName": "Cassandra-target",
+            "transformationType": "Target",
+            "order": 4
+          },
+          "props": {
+            "tgtSysName": "Cassandra",
+            "tgtSysProp": {
+              "keyspace": "learning",
+              "table": "events_learning_stream"
+            }
+          },
+          "inbound": {
+            "src1": "PostgreSQL-target"
+          }
+        }
+      ]
+    }
+  ]
 }
 

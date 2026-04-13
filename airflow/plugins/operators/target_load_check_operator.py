@@ -6,7 +6,8 @@ from typing import Any
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
 
-from operators.pipeline_config_utils import load_pipeline_config
+from pipelines.base.connection_manager import ConnectionManager
+from operators.pipeline_config_utils import load_pipeline_config, normalize_pipeline_config
 
 _ALLOWED_NAME = re.compile(r"^[A-Za-z0-9_]+$")
 
@@ -20,18 +21,34 @@ class TargetLoadCheckOperator(BaseOperator):
         self.min_rows = min_rows
 
     def execute(self, context: dict[str, Any]) -> dict[str, int]:
-        cfg = load_pipeline_config(self.config_path)
+        cfg = normalize_pipeline_config(load_pipeline_config(self.config_path))
+        conn_manager = ConnectionManager()
+        cfg["connections"] = conn_manager.resolve_all(cfg.get("connections", {}))
+        pipeline_name = str(cfg.get("pipelineName", "learning_pipeline"))
         results: dict[str, int] = {}
 
         for target in cfg.get("targets", []):
             target_type = str(target.get("type", "")).lower()
             if target_type == "postgres":
                 table = self._require_safe_name(str(target.get("table", "")), "postgres.table")
+                conn = dict(cfg.get("connections", {}).get("postgres", {}))
+                conn_manager.assert_egress(
+                    pipeline_name,
+                    host=str(conn.get("host", "localhost")),
+                    port=int(conn.get("port", 5432)),
+                )
                 count = self._check_postgres(cfg, table)
                 results[f"postgres:{table}"] = count
             elif target_type == "cassandra":
                 keyspace = self._require_safe_name(str(target.get("keyspace", "learning")), "cassandra.keyspace")
                 table = self._require_safe_name(str(target.get("table", "")), "cassandra.table")
+                conn = dict(cfg.get("connections", {}).get("cassandra", {}))
+                hosts = conn.get("hosts") or [conn.get("host", "127.0.0.1")]
+                conn_manager.assert_egress(
+                    pipeline_name,
+                    host=str(hosts[0]),
+                    port=int(conn.get("port", 9042)),
+                )
                 count = self._check_cassandra(cfg, keyspace, table)
                 results[f"cassandra:{keyspace}.{table}"] = count
 

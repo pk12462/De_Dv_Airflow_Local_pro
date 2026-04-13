@@ -8,6 +8,7 @@ from airflow import DAG
 
 from operators.file_watcher_operator import FileWatcherOperator
 from operators.holiday_calendar_operator import HolidayCalendarOperator
+from operators.pipeline_config_utils import normalize_pipeline_config
 from operators.pipeline_runner_operator import PipelineRunnerOperator
 from operators.target_load_check_operator import TargetLoadCheckOperator
 
@@ -31,8 +32,8 @@ def _schedule_for_mode(mode: str) -> str:
 
 def _load_pipeline_name(config_path: Path) -> tuple[str, str]:
     with config_path.open("r", encoding="utf-8-sig") as f:
-        payload = json.load(f)
-    pipeline_name = str(payload.get("pipelineName", config_path.stem))
+        payload = normalize_pipeline_config(json.load(f))
+    pipeline_name = str(payload.get("pipelineName", config_path.stem)).replace("-", "_")
     mode = str(payload.get("mode", "batch")).lower()
     return pipeline_name, mode
 
