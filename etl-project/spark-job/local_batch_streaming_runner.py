@@ -52,9 +52,23 @@ def _read_jsonl_file(path: Path) -> list[dict[str, Any]]:
     return records
 
 
+def _resolve_source_path(path_value: str) -> Path:
+    source_path = Path(path_value)
+    if source_path.is_absolute():
+        return source_path
+
+    candidates = [source_path, Path.cwd() / source_path, Path("/opt/airflow") / source_path]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    # Fallback for clearer container behavior when running from temp dirs.
+    return Path("/opt/airflow") / source_path
+
+
 def _read_source_records(source_cfg: dict[str, Any]) -> list[dict[str, Any]]:
     source_type = str(source_cfg.get("type", "local_csv")).lower()
-    source_path = Path(source_cfg["path"])
+    source_path = _resolve_source_path(str(source_cfg["path"]))
 
     if source_type == "local_csv":
         return _read_csv_file(source_path, delimiter=",")
