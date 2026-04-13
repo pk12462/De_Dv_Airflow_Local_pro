@@ -1,7 +1,8 @@
 version: '3.8'
 
 x-airflow-common: &airflow-common
-  image: apache/airflow:2.11.0-python3.11
+  image: apache/airflow:2.11.2-python3.11
+  platform: linux/amd64
   env_file:
     - .env
   environment:
@@ -12,6 +13,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__LOAD_EXAMPLES: ${AIRFLOW__CORE__LOAD_EXAMPLES:-false}
     AIRFLOW__API__AUTH_BACKENDS: ${AIRFLOW__API__AUTH_BACKENDS}
     AIRFLOW__WEBSERVER__BASE_URL: ${AIRFLOW__WEBSERVER__BASE_URL:-http://localhost:8080}
+    PYTHON PATH: /opt/airflow:/opt/airflow/plugins
   volumes:
     - ./dags:/opt/airflow/dags
     - ./plugins:/opt/airflow/plugins
@@ -27,6 +29,7 @@ x-airflow-common: &airflow-common
 services:
   postgres:
     image: postgres:16
+    platform: linux/amd64
     restart: unless-stopped
     environment:
       POSTGRES_USER: airflow
@@ -44,46 +47,32 @@ services:
   airflow-init:
     <<: *airflow-common
     restart: "no"
-    entrypoint: /bin/bash
-    command:
-      - -c
-      - |
-        airflow db migrate
-        airflow users create \
-          --username ${AIRFLOW_WWW_USER_USERNAME:-admin} \
-          --password ${AIRFLOW_WWW_USER_PASSWORD:-admin} \
-          --firstname Admin \
-          --lastname User \
-          --role Admin \
-          --email admin@example.com || true
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      airflow db migrate &&
+      airflow users create
+      --username ${AIRFLOW_WWW_USER_USERNAME:-admin}
+      --password ${AIRFLOW_WWW_USER_PASSWORD:-admin}
+      --firstname Admin
+      --lastname User
+      --role Admin
+      --email admin@example.com || true
 
   airflow-webserver:
     <<: *airflow-common
     restart: unless-stopped
-    command: bash -c "airflow webserver"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      airflow-init:
-        condition: service_completed_successfully
+    command: webserver
     ports:
       - "8080:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
       retries: 5
-    entrypoint: ["/entrypoint"]
 
   airflow-scheduler:
     <<: *airflow-common
     restart: unless-stopped
-    command: bash -c "airflow scheduler"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      airflow-init:
-        condition: service_completed_successfully
-    entrypoint: ["/entrypoint"]
+    command: scheduler
     healthcheck:
       test: ["CMD", "airflow", "jobs", "check", "--job-type", "SchedulerJob", "--hostname", "$$HOSTNAME"]
       interval: 30s
@@ -93,24 +82,12 @@ services:
   airflow-triggerer:
     <<: *airflow-common
     restart: unless-stopped
-    command: bash -c "airflow triggerer"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      airflow-init:
-        condition: service_completed_successfully
-    entrypoint: ["/entrypoint"]
+    command: triggerer
 
   airflow-dag-processor:
     <<: *airflow-common
     restart: unless-stopped
-    command: bash -c "airflow dag-processor"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      airflow-init:
-        condition: service_completed_successfully
-    entrypoint: ["/entrypoint"]
+    command: dag-processor
 
 
 volumes:
