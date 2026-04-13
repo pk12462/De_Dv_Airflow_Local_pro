@@ -16,7 +16,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   airflow-webserver:
-    image: apache/airflow:2.11.0-python3.11
+    image: apache/airflow:2.11.0
+    platform: linux/amd64
     container_name: airflow-webserver
     depends_on:
       postgres:
