@@ -16,25 +16,25 @@ apache-airflow-providers-redis==3.7.1; python_version < "3.13"
 apache-airflow-providers-celery==3.7.1; python_version < "3.13"
 
 # ─── Kafka ────────────────────────────────────────────────────────────────────
-kafka-python==2.0.2
-confluent-kafka==2.4.0
-fastavro==1.9.4
+kafka-python==2.0.2; python_version < "3.13"
+confluent-kafka==2.4.0; python_version < "3.13"
+fastavro==1.9.4; python_version < "3.13"
 
 # ─── Spark / PySpark ─────────────────────────────────────────────────────────
-pyspark==3.5.1
-delta-spark==3.2.0
+pyspark==3.5.1; python_version < "3.13"
+delta-spark==3.2.0; python_version < "3.13"
 
 # ─── Pandas / SQL ────────────────────────────────────────────────────────────
-pandas==2.2.2
-numpy==1.26.4
-SQLAlchemy==2.0.30
-psycopg2-binary==2.9.9
-pyarrow==16.0.0
-cassandra-driver==3.29.2
+pandas==2.2.2; python_version < "3.13"
+numpy==1.26.4; python_version < "3.13"
+SQLAlchemy==2.0.30; python_version < "3.13"
+psycopg2-binary==2.9.9; python_version < "3.13"
+pyarrow==16.0.0; python_version < "3.13"
+cassandra-driver==3.29.2; python_version < "3.13"
 
 # ─── AWS ─────────────────────────────────────────────────────────────────────
-boto3==1.34.100
-s3fs==2024.3.1
+boto3==1.34.100; python_version < "3.13"
+s3fs==2024.3.1; python_version < "3.13"
 
 # ─── Testing ─────────────────────────────────────────────────────────────────
 pytest==8.2.0
